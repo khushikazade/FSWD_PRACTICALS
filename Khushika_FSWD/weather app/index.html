@@ -1,0 +1,523 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeatherWorld 🌍</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: background 1.5s ease;
+    overflow: hidden;
+  }
+
+  /* Dynamic BG themes */
+  body.sunny    { background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e); }
+  body.cloudy   { background: linear-gradient(135deg, #757F9A, #D7DDE8); }
+  body.rainy    { background: linear-gradient(135deg, #373B44, #4286f4); }
+  body.snowy    { background: linear-gradient(135deg, #83a4d4, #b6fbff); }
+  body.night    { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+  body.stormy   { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
+  body.foggy    { background: linear-gradient(135deg, #bdc3c7, #2c3e50); }
+  body.default  { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+  /* Floating particles */
+  .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: float linear infinite;
+    opacity: 0.6;
+  }
+  @keyframes float {
+    0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Card */
+  .card {
+    position: relative; z-index: 10;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    border-radius: 32px;
+    padding: 40px 38px 36px;
+    width: 380px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    text-align: center;
+    transition: all 0.5s ease;
+  }
+
+  h1 {
+    color: #fff;
+    font-size: 1.7rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    margin-bottom: 24px;
+  }
+  h1 span { font-size: 1.4rem; }
+
+  /* Input row */
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.28);
+    color: #fff;
+    font-size: 1rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    outline: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transition: background 0.3s;
+  }
+  input::placeholder { color: rgba(255,255,255,0.65); }
+  input:focus { background: rgba(255,255,255,0.38); }
+
+  button {
+    padding: 13px 20px;
+    border: none;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.9);
+    color: #764ba2;
+    font-size: 1rem;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  }
+  button:hover { transform: scale(1.07); background: #fff; }
+  button:active { transform: scale(0.97); }
+
+  /* Cartoon scene */
+  .cartoon-scene {
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .cartoon-svg { width: 150px; height: 150px; }
+
+  /* Animations */
+  @keyframes bob      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes spin     { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  @keyframes wiggle   { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
+  @keyframes pulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  @keyframes shimmer  { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes rainDrop { 0%{transform:translateY(-10px);opacity:0} 100%{transform:translateY(30px);opacity:1} }
+  @keyframes snowfall { 0%{transform:translateY(-10px) rotate(0deg);opacity:0} 100%{transform:translateY(30px) rotate(180deg);opacity:1} }
+  @keyframes lightning { 0%,90%,100%{opacity:0} 91%,99%{opacity:1} }
+  @keyframes fog-drift{ 0%{transform:translateX(-20px);opacity:0.4} 100%{transform:translateX(20px);opacity:0.7} }
+
+  .bob    { animation: bob 2s ease-in-out infinite; }
+  .spin   { animation: spin 6s linear infinite; transform-origin: center; }
+  .wiggle { animation: wiggle 1.2s ease-in-out infinite; transform-origin: center; }
+  .pulse  { animation: pulse 2s ease-in-out infinite; }
+
+  /* Result */
+  .result-box {
+    background: rgba(255,255,255,0.22);
+    border-radius: 20px;
+    padding: 18px 14px 14px;
+    color: #fff;
+    display: none;
+  }
+  .result-box.show { display: block; }
+  .city-name   { font-size: 1.5rem; font-weight: 900; letter-spacing: 0.5px; }
+  .temp-big    { font-size: 3.2rem; font-weight: 900; line-height: 1.1; }
+  .desc-text   { font-size: 1rem; font-weight: 700; opacity: 0.88; margin-top: 2px; }
+  .extra-row   { display: flex; justify-content: space-around; margin-top: 12px; }
+  .extra-item  { font-size: 0.82rem; font-weight: 700; opacity: 0.8; text-align: center; }
+  .extra-item span { display: block; font-size: 1.1rem; opacity: 1; }
+
+  /* Error */
+  .error-msg {
+    color: #ffe0e0;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-top: -14px;
+    margin-bottom: 8px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* Loading */
+  .loader {
+    display: none;
+    justify-content: center;
+    margin: 8px 0;
+  }
+  .loader.show { display: flex; }
+  .dot {
+    width: 10px; height: 10px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    margin: 0 4px;
+    animation: dot-bounce 0.9s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.15s; }
+  .dot:nth-child(3) { animation-delay: 0.30s; }
+  @keyframes dot-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+</style>
+</head>
+<body class="default">
+
+<div class="particles" id="particles"></div>
+
+<div class="card">
+  <h1><span>🌍</span> WeatherWorld</h1>
+
+  <div class="input-row">
+    <input type="text" id="city" placeholder="Enter city…" onkeydown="if(event.key==='Enter')getWeather()">
+    <button onclick="getWeather()">Search</button>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+  <div class="error-msg" id="error">⚠️ City not found. Try again!</div>
+
+  <div class="cartoon-scene" id="scene">
+    <!-- Default idle cartoon -->
+    <svg class="cartoon-svg bob" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Globe -->
+      <circle cx="75" cy="78" r="50" fill="#4fc3f7" opacity="0.9"/>
+      <ellipse cx="75" cy="78" rx="22" ry="50" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <line x1="25" y1="78" x2="125" y2="78" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <!-- Face -->
+      <circle cx="62" cy="70" r="5" fill="#fff"/>
+      <circle cx="88" cy="70" r="5" fill="#fff"/>
+      <circle cx="63" cy="71" r="2.5" fill="#333"/>
+      <circle cx="89" cy="71" r="2.5" fill="#333"/>
+      <path d="M63 84 Q75 94 87 84" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Stars -->
+      <text x="30" y="30" font-size="14" class="shimmer" style="animation:shimmer 1.5s ease-in-out infinite">⭐</text>
+      <text x="100" y="22" font-size="10" class="shimmer" style="animation:shimmer 2s ease-in-out infinite 0.5s">✨</text>
+    </svg>
+  </div>
+
+  <div class="result-box" id="result">
+    <div class="city-name" id="cityName">—</div>
+    <div class="temp-big" id="tempBig">—</div>
+    <div class="desc-text" id="descText">—</div>
+    <div class="extra-row">
+      <div class="extra-item"><span id="humidVal">—</span>Humidity</div>
+      <div class="extra-item"><span id="windVal">—</span>Wind</div>
+      <div class="extra-item"><span id="feelsVal">—</span>Feels like</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_KEY = "ba51a38af1d15525db8b15e552dd2cee";
+
+/* ── Particle system ── */
+function spawnParticles(type) {
+  const container = document.getElementById('particles');
+  container.innerHTML = '';
+  const configs = {
+    sunny:  { count:18, colors:['#FFD700','#FFA500','#FFEC6E'], size:[6,14], dur:[6,12] },
+    cloudy: { count:10, colors:['#D7DDE8','#b0bec5','#cfd8dc'], size:[20,40], dur:[10,20] },
+    rainy:  { count:30, colors:['#82b1ff','#90caf9','#b3e5fc'], size:[2,4],  dur:[1.5,3], rain:true },
+    snowy:  { count:25, colors:['#fff','#e3f2fd','#bbdefb'],    size:[4,10], dur:[3,7],  snow:true },
+    stormy: { count:20, colors:['#607d8b','#455a64','#37474f'], size:[3,8],  dur:[1,3] },
+    foggy:  { count:8,  colors:['rgba(189,195,199,0.5)'],       size:[40,80],dur:[8,16] },
+    night:  { count:30, colors:['#fff','#fffde7','#f8f9fa'],    size:[2,5],  dur:[4,9] },
+    default:{ count:15, colors:['rgba(255,255,255,0.3)'],       size:[5,15], dur:[6,12] },
+  };
+  const c = configs[type] || configs.default;
+  for (let i = 0; i < c.count; i++) {
+    const el = document.createElement('div');
+    el.className = 'particle';
+    const size = Math.random()*(c.size[1]-c.size[0])+c.size[0];
+    el.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      background:${c.colors[Math.floor(Math.random()*c.colors.length)]};
+      animation-duration:${Math.random()*(c.dur[1]-c.dur[0])+c.dur[0]}s;
+      animation-delay:${Math.random()*-10}s;
+      ${c.rain ? 'border-radius:2px;width:2px;height:12px;' : ''}
+      ${c.snow ? 'border-radius:50%;' : ''}
+    `;
+    container.appendChild(el);
+  }
+}
+
+/* ── Cartoons ── */
+function getSVG(cond) {
+  const c = cond.toLowerCase();
+
+  if (c.includes('clear') || c.includes('sunny')) return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Rays -->
+      <g class="spin" style="transform-origin:75px 75px">
+        ${[0,45,90,135,180,225,270,315].map(a=>`<line x1="75" y1="18" x2="75" y2="8" stroke="#FFD700" stroke-width="3" stroke-linecap="round" transform="rotate(${a} 75 75)"/>`).join('')}
+      </g>
+      <!-- Sun body -->
+      <circle cx="75" cy="75" r="30" fill="#FFD700" class="pulse"/>
+      <!-- Face -->
+      <circle cx="65" cy="70" r="4" fill="#fff"/>
+      <circle cx="85" cy="70" r="4" fill="#fff"/>
+      <circle cx="65.5" cy="70.5" r="2" fill="#333"/>
+      <circle cx="85.5" cy="70.5" r="2" fill="#333"/>
+      <circle cx="66" cy="69" r="1" fill="#fff"/>
+      <circle cx="86" cy="69" r="1" fill="#fff"/>
+      <path d="M63 82 Q75 93 87 82" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Cheeks -->
+      <circle cx="59" cy="80" r="6" fill="#FF8C00" opacity="0.4"/>
+      <circle cx="91" cy="80" r="6" fill="#FF8C00" opacity="0.4"/>
+      <text x="12" y="130" font-size="18" class="bob" style="animation-delay:0.3s">🌻</text>
+      <text x="110" y="130" font-size="16" class="bob" style="animation-delay:0.8s">🌈</text>
+    </svg>`;
+
+  if (c.includes('cloud') && !c.includes('rain') && !c.includes('thunder')) return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Back cloud -->
+      <g opacity="0.6" style="animation:fog-drift 4s ease-in-out infinite alternate">
+        <circle cx="50" cy="85" r="20" fill="#cfd8dc"/>
+        <circle cx="70" cy="75" r="25" fill="#cfd8dc"/>
+        <circle cx="95" cy="82" r="18" fill="#cfd8dc"/>
+        <rect x="30" y="82" width="83" height="25" fill="#cfd8dc" rx="10"/>
+      </g>
+      <!-- Main cloud -->
+      <g class="bob">
+        <circle cx="55" cy="75" r="22" fill="#eceff1"/>
+        <circle cx="78" cy="63" r="27" fill="#eceff1"/>
+        <circle cx="102" cy="72" r="20" fill="#eceff1"/>
+        <rect x="33" y="70" width="89" height="30" fill="#eceff1" rx="12"/>
+        <!-- Face -->
+        <circle cx="68" cy="72" r="4.5" fill="#fff"/>
+        <circle cx="88" cy="72" r="4.5" fill="#fff"/>
+        <circle cx="68.5" cy="72.5" r="2.2" fill="#555"/>
+        <circle cx="88.5" cy="72.5" r="2.2" fill="#555"/>
+        <path d="M65 82 Q78 90 91 82" fill="none" stroke="#90a4ae" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="62" cy="79" r="5" fill="#b0bec5" opacity="0.5"/>
+        <circle cx="94" cy="79" r="5" fill="#b0bec5" opacity="0.5"/>
+      </g>
+      <text x="18" y="136" font-size="16">🐦</text>
+      <text x="110" y="136" font-size="14">🌤</text>
+    </svg>`;
+
+  if (c.includes('rain') || c.includes('drizzle')) return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Cloud -->
+      <g class="bob" style="animation-delay:0s">
+        <circle cx="52" cy="62" r="20" fill="#90a4ae"/>
+        <circle cx="75" cy="52" r="25" fill="#90a4ae"/>
+        <circle cx="100" cy="60" r="19" fill="#90a4ae"/>
+        <rect x="32" y="58" width="88" height="28" fill="#90a4ae" rx="12"/>
+        <!-- Grumpy face -->
+        <circle cx="66" cy="60" r="4" fill="#fff"/>
+        <circle cx="86" cy="60" r="4" fill="#fff"/>
+        <circle cx="66" cy="61" r="2" fill="#333"/>
+        <circle cx="86" cy="61" r="2" fill="#333"/>
+        <!-- frown -->
+        <path d="M64 72 Q75 66 88 72" fill="none" stroke="#607d8b" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- eyebrows (grumpy) -->
+        <path d="M62 55 L70 57" stroke="#607d8b" stroke-width="2" stroke-linecap="round"/>
+        <path d="M82 57 L90 55" stroke="#607d8b" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <!-- Rain drops animated -->
+      ${[40,58,76,94,112,49,67,85,103].map((x,i)=>`
+        <line x1="${x}" y1="92" x2="${x-3}" y2="108" stroke="#64b5f6" stroke-width="2.5" stroke-linecap="round"
+          style="animation:rainDrop 1.${i%3}s ease-in infinite;animation-delay:${(i*0.18).toFixed(2)}s;opacity:0"/>
+      `).join('')}
+      <text x="18" y="140" font-size="16">☂️</text>
+      <text x="108" y="140" font-size="16">🐸</text>
+    </svg>`;
+
+  if (c.includes('snow') || c.includes('blizzard') || c.includes('sleet')) return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Snowman body -->
+      <circle cx="75" cy="108" r="28" fill="#e3f2fd" stroke="#90caf9" stroke-width="2"/>
+      <circle cx="75" cy="70" r="20" fill="#e3f2fd" stroke="#90caf9" stroke-width="2"/>
+      <!-- Scarf -->
+      <rect x="56" y="88" width="38" height="7" fill="#ef5350" rx="3"/>
+      <rect x="56" y="88" width="10" height="16" fill="#ef5350" rx="3"/>
+      <!-- Face -->
+      <circle cx="68" cy="65" r="3.5" fill="#fff"/>
+      <circle cx="82" cy="65" r="3.5" fill="#fff"/>
+      <circle cx="68" cy="65.5" r="1.8" fill="#333"/>
+      <circle cx="82" cy="65.5" r="1.8" fill="#333"/>
+      <circle cx="69" cy="64.5" r="0.8" fill="#fff"/>
+      <circle cx="83" cy="64.5" r="0.8" fill="#fff"/>
+      <!-- Carrot nose -->
+      <polygon points="75,70 72,73 78,73" fill="#FF8C00"/>
+      <!-- Smile -->
+      <path d="M68 76 Q75 82 82 76" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+      <!-- Buttons -->
+      <circle cx="75" cy="100" r="2.5" fill="#555"/>
+      <circle cx="75" cy="110" r="2.5" fill="#555"/>
+      <circle cx="75" cy="120" r="2.5" fill="#555"/>
+      <!-- Arms -->
+      <line x1="47" y1="70" x2="62" y2="82" stroke="#8d6e63" stroke-width="3" stroke-linecap="round"/>
+      <line x1="103" y1="70" x2="88" y2="82" stroke="#8d6e63" stroke-width="3" stroke-linecap="round"/>
+      <!-- Hat -->
+      <rect x="60" y="45" width="30" height="5" fill="#333" rx="2"/>
+      <rect x="65" y="28" width="20" height="18" fill="#333" rx="3"/>
+      <!-- Snowflakes -->
+      ${[22,50,90,120,35,108].map((x,i)=>`
+        <text x="${x}" y="${25+i*18}" font-size="${8+i%3*3}" style="animation:snowfall ${1.5+i*0.4}s linear infinite;animation-delay:${(i*0.3).toFixed(1)}s;opacity:0">❄️</text>
+      `).join('')}
+    </svg>`;
+
+  if (c.includes('thunder') || c.includes('storm') || c.includes('lightning')) return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Dark cloud -->
+      <g class="wiggle">
+        <circle cx="50" cy="65" r="22" fill="#546e7a"/>
+        <circle cx="75" cy="52" r="28" fill="#546e7a"/>
+        <circle cx="102" cy="63" r="21" fill="#546e7a"/>
+        <rect x="28" y="60" width="94" height="32" fill="#546e7a" rx="14"/>
+        <!-- Angry face -->
+        <circle cx="65" cy="63" r="5" fill="#fff"/>
+        <circle cx="87" cy="63" r="5" fill="#fff"/>
+        <circle cx="65" cy="64" r="2.5" fill="#c62828"/>
+        <circle cx="87" cy="64" r="2.5" fill="#c62828"/>
+        <!-- angry brows -->
+        <path d="M60 56 L70 59" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M82 59 L92 56" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Angry mouth -->
+        <path d="M63 75 Q75 68 89 75" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <!-- Lightning bolts -->
+      <path d="M62 90 L55 108 L65 108 L55 128" fill="none" stroke="#FFD600" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
+        style="animation:lightning 2s ease-in-out infinite"/>
+      <path d="M88 90 L82 105 L90 105 L83 122" fill="none" stroke="#FFD600" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+        style="animation:lightning 2s ease-in-out infinite 0.5s"/>
+      <text x="18" y="142" font-size="16">⚡</text>
+      <text x="112" y="142" font-size="14">🌪</text>
+    </svg>`;
+
+  if (c.includes('fog') || c.includes('mist') || c.includes('haze')) return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ghost character -->
+      <g class="bob">
+        <path d="M45 85 Q45 45 75 45 Q105 45 105 85 L105 118 Q95 110 85 118 Q75 110 65 118 Q55 110 45 118 Z" fill="#eceff1" opacity="0.9"/>
+        <!-- Eyes -->
+        <ellipse cx="63" cy="75" rx="7" ry="8" fill="#333"/>
+        <ellipse cx="87" cy="75" rx="7" ry="8" fill="#333"/>
+        <circle cx="65" cy="72" r="2.5" fill="#fff"/>
+        <circle cx="89" cy="72" r="2.5" fill="#fff"/>
+        <!-- Mouth O -->
+        <ellipse cx="75" cy="92" rx="6" ry="5" fill="#555"/>
+      </g>
+      <!-- Fog lines -->
+      ${[1,2,3,4].map(i=>`
+        <rect x="20" y="${108+i*8}" width="${60+i*10}" height="4" fill="rgba(189,195,199,0.55)" rx="2"
+          style="animation:fog-drift ${2+i}s ease-in-out infinite alternate;animation-delay:${i*0.3}s"/>
+      `).join('')}
+      <text x="110" y="136" font-size="18">👻</text>
+    </svg>`;
+
+  // night / default
+  return `
+    <svg class="cartoon-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Moon -->
+      <g class="bob">
+        <circle cx="80" cy="72" r="35" fill="#FFF9C4"/>
+        <circle cx="93" cy="58" r="30" fill="#424242"/>
+        <!-- Face -->
+        <circle cx="68" cy="70" r="5" fill="#fff"/>
+        <circle cx="85" cy="70" r="5" fill="#fff"/>
+        <circle cx="68.5" cy="71" r="2.5" fill="#333"/>
+        <circle cx="85.5" cy="71" r="2.5" fill="#333"/>
+        <circle cx="69" cy="69.5" r="1" fill="#fff"/>
+        <circle cx="86" cy="69.5" r="1" fill="#fff"/>
+        <path d="M65 83 Q76 92 88 83" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Craters -->
+        <circle cx="56" cy="88" r="5" fill="rgba(0,0,0,0.07)"/>
+        <circle cx="96" cy="96" r="4" fill="rgba(0,0,0,0.07)"/>
+      </g>
+      <!-- Stars -->
+      ${[20,40,115,130,25,110].map((x,i)=>`
+        <circle cx="${x}" cy="${12+i*10}" r="${1.5+i%2}" fill="#fff" style="animation:shimmer ${1+i*0.4}s ease-in-out infinite;animation-delay:${(i*0.25).toFixed(2)}s"/>
+      `).join('')}
+      <text x="12" y="140" font-size="16" class="shimmer">⭐</text>
+      <text x="112" y="140" font-size="14" class="shimmer" style="animation-delay:0.7s">🌙</text>
+    </svg>`;
+}
+
+function getTheme(cond) {
+  const c = cond.toLowerCase();
+  if (c.includes('clear') || c.includes('sunny')) return 'sunny';
+  if (c.includes('rain') || c.includes('drizzle')) return 'rainy';
+  if (c.includes('snow') || c.includes('blizzard') || c.includes('sleet')) return 'snowy';
+  if (c.includes('thunder') || c.includes('storm')) return 'stormy';
+  if (c.includes('fog') || c.includes('mist') || c.includes('haze')) return 'foggy';
+  if (c.includes('cloud')) return 'cloudy';
+  return 'night';
+}
+
+function getWeather() {
+  const city = document.getElementById('city').value.trim();
+  if (!city) return;
+
+  const loader = document.getElementById('loader');
+  const error  = document.getElementById('error');
+  const result = document.getElementById('result');
+
+  loader.classList.add('show');
+  error.classList.remove('show');
+  result.classList.remove('show');
+
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      loader.classList.remove('show');
+      if (data.cod !== 200) { error.classList.add('show'); return; }
+
+      const cond  = data.weather[0].main;
+      const desc  = data.weather[0].description;
+      const theme = getTheme(cond);
+
+      // Theme
+      document.body.className = theme;
+      spawnParticles(theme);
+
+      // Cartoon
+      document.getElementById('scene').innerHTML = getSVG(cond + ' ' + desc);
+
+      // Data
+      document.getElementById('cityName').textContent = `${data.name}, ${data.sys.country}`;
+      document.getElementById('tempBig').textContent  = `${Math.round(data.main.temp)}°C`;
+      document.getElementById('descText').textContent = desc.charAt(0).toUpperCase() + desc.slice(1);
+      document.getElementById('humidVal').textContent = `💧 ${data.main.humidity}%`;
+      document.getElementById('windVal').textContent  = `💨 ${Math.round(data.wind.speed)} m/s`;
+      document.getElementById('feelsVal').textContent = `🌡 ${Math.round(data.main.feels_like)}°C`;
+
+      result.classList.add('show');
+    })
+    .catch(() => { loader.classList.remove('show'); error.classList.add('show'); });
+}
+
+// Initial particles
+spawnParticles('default');
+</script>
+</body>
+</html>
